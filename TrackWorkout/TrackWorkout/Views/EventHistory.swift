@@ -227,8 +227,6 @@ private struct WorkoutSummaryView: View {
     let endTime: Date
     let sets: [WorkoutSet]
 
-    private var totalSets: Int { sets.count }
-
     private var totalEntries: Int {
         sets.reduce(0) { $0 + $1.entries.count }
     }
@@ -253,7 +251,7 @@ private struct WorkoutSummaryView: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                Text("Sets: \(totalSets)")
+                Text("Sets: \(totalEntries)")
                     .font(.caption2)
                     .foregroundColor(.secondary)
                 if totalWeightMoved > 0 {

@@ -60,11 +60,8 @@ appId: com.athenia.TrackWorkout
 - tapOn: "Done"
 - waitForAnimationToEnd
 
-# In-history summary sanity check. NOTE: inline summary uses "Sets: N"
-# where N is the number of consecutive-move groups, not the number of
-# logged entries. That disagrees with the modal and the PRD ("3 sets").
-# Bug tracked in runs/2026-04-15-script03.md. Assertion below avoids
-# that ambiguity until the spec clarifies.
+# In-history summary sanity check.
 - assertVisible: "Workout ended at.*"
+- assertVisible: "Sets: 3"
 - assertVisible: "Total: 2,560"
 - assertNotVisible: "Elapsed:.*"

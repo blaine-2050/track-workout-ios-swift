@@ -1,0 +1,42 @@
+# Maestro flow: Track Workout script 01 — single set bench press
+# Spec: https://github.com/blaine-2050/track-workout-core/blob/main/WORKOUT_SCRIPTS/01-single-set-bench-press.md
+# Precondition: app freshly installed (run `xcrun simctl uninstall booted com.athenia.TrackWorkout && xcrun simctl install booted <app>` first)
+
+appId: com.athenia.TrackWorkout
+---
+# Step 1 — Launch fresh
+- launchApp:
+    clearState: false  # we wiped via simctl; Maestro's clearState needs permission plumbing
+- takeScreenshot: runs/screens/2026-04-15-script01-step1-launch
+- assertVisible: "Select Exercise"
+- assertVisible: "Log"
+
+# Step 2 — Select Bench Press
+- tapOn: "Select Exercise"
+- takeScreenshot: runs/screens/2026-04-15-script01-step2a-picker-open
+- tapOn: "Bench Press"
+- takeScreenshot: runs/screens/2026-04-15-script01-step2b-bench-selected
+- assertVisible: "Bench Press"
+
+# Step 3 — Weight: 1, 3, 5
+- tapOn: "1"
+- tapOn: "3"
+- tapOn: "5"
+- takeScreenshot: runs/screens/2026-04-15-script01-step3-weight-135
+
+# Step 4 — Switch to reps field
+# The Reps value display is the tappable target (approx [213,180][241,209])
+- tapOn: "Reps"
+
+# Step 5 — Reps: 1, 0
+- tapOn: "1"
+- tapOn: "0"
+- takeScreenshot: runs/screens/2026-04-15-script01-step5-reps-10
+
+# Step 6 — Log
+- tapOn: "Log"
+- takeScreenshot: runs/screens/2026-04-15-script01-step6-logged
+
+# Step 7 — Stop
+- tapOn: "Stop"
+- takeScreenshot: runs/screens/2026-04-15-script01-step7-stopped

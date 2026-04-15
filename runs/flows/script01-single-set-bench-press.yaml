@@ -37,6 +37,11 @@ appId: com.athenia.TrackWorkout
 - tapOn: "Log"
 - takeScreenshot: runs/screens/2026-04-15-script01-step6-logged
 
-# Step 7 — Stop
+# Step 7 — Stop triggers summary sheet
 - tapOn: "Stop"
 - takeScreenshot: runs/screens/2026-04-15-script01-step7-stopped
+- assertVisible: "Workout Complete"
+- assertVisible: "1 set"
+- assertVisible: "1,350 lbs moved"
+- tapOn: "Done"
+- takeScreenshot: runs/screens/2026-04-15-script01-step8-dismissed

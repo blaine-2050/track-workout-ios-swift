@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var showCopiedAlert = false
     @State private var showAddMoveAlert = false
     @State private var csvContent: String = ""
+    @State private var completedSummary: WorkoutSummaryData?
     private let exportTimestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -185,6 +186,11 @@ struct ContentView: View {
             } message: {
                 Text("Custom move creation is coming soon.")
             }
+            .sheet(item: $completedSummary) { summary in
+                WorkoutCompletedSheet(summary: summary) {
+                    completedSummary = nil
+                }
+            }
             .onAppear {
                 viewModel.refreshPendingSyncCount()
             }
@@ -300,18 +306,47 @@ struct ContentView: View {
     private func stopWorkout() {
         guard let workout = viewModel.currentWorkout else { return }
 
-        withAnimation {
-            workout.endTime = Date()
+        let endTime = Date()
+        workout.endTime = endTime
 
-            do {
-                try viewContext.save()
-                viewModel.currentWorkout = nil
-                viewModel.selectedMove = nil
-            } catch {
-                let nsError = error as NSError
-                print("Error stopping workout: \(nsError), \(nsError.userInfo)")
-            }
+        // Stamp endedAt on any still-open latest entry so its duration isn't left dangling.
+        stampEndedAtOnPreviousEntry(now: endTime)
+
+        let summary = buildSummary(for: workout, endTime: endTime)
+
+        do {
+            try viewContext.save()
+        } catch {
+            let nsError = error as NSError
+            print("Error stopping workout: \(nsError), \(nsError.userInfo)")
+            return
         }
+
+        withAnimation {
+            viewModel.currentWorkout = nil
+            viewModel.selectedMove = nil
+        }
+        completedSummary = summary
+    }
+
+    private func buildSummary(for workout: Workout, endTime: Date) -> WorkoutSummaryData {
+        let workoutId = workout.id
+        let start = workout.startTime ?? endTime
+        let entries = logEntries.filter { $0.workoutId != nil && $0.workoutId == workoutId }
+
+        var totals: [String: Double] = [:]
+        for entry in entries where entry.measurementType != "duration" {
+            let unit = entry.weightUnit ?? "lbs"
+            totals[unit, default: 0] += entry.weight * Double(entry.reps)
+        }
+
+        return WorkoutSummaryData(
+            id: UUID(),
+            endTime: endTime,
+            duration: endTime.timeIntervalSince(start),
+            setCount: entries.count,
+            totalsByUnit: totals
+        )
     }
 
 }
@@ -389,6 +424,107 @@ struct IntervalEntry: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Workout Summary
+
+struct WorkoutSummaryData: Identifiable {
+    let id: UUID
+    let endTime: Date
+    let duration: TimeInterval
+    let setCount: Int
+    let totalsByUnit: [String: Double]
+}
+
+struct WorkoutCompletedSheet: View {
+    let summary: WorkoutSummaryData
+    let onDone: () -> Void
+
+    private static let endTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d 'at' h:mm a"
+        return f
+    }()
+
+    private var durationText: String {
+        let total = max(0, Int(summary.duration))
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+        if hours > 0 {
+            return "\(hours):\(String(format: "%02d", minutes)):\(String(format: "%02d", seconds)) hours"
+        } else if minutes > 0 {
+            return "\(minutes):\(String(format: "%02d", seconds)) min"
+        } else {
+            return "\(seconds) sec"
+        }
+    }
+
+    private var setsText: String {
+        summary.setCount == 1 ? "1 set" : "\(summary.setCount) sets"
+    }
+
+    private var totalLines: [(unit: String, text: String)] {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        return summary.totalsByUnit
+            .sorted { $0.key < $1.key }
+            .map { (unit, value) in
+                let number = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+                return (unit, "\(number) \(unit) moved")
+            }
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Workout Complete")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .padding(.top, 24)
+
+            VStack(alignment: .leading, spacing: 12) {
+                summaryRow(label: "Ended", value: Self.endTimeFormatter.string(from: summary.endTime))
+                summaryRow(label: "Duration", value: durationText)
+                summaryRow(label: "Sets", value: setsText)
+                if totalLines.isEmpty {
+                    summaryRow(label: "Total", value: "—")
+                } else {
+                    ForEach(totalLines, id: \.unit) { line in
+                        summaryRow(label: "Total", value: line.text)
+                    }
+                }
+            }
+            .padding(.horizontal)
+
+            Spacer()
+
+            Button(action: onDone) {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.blue)
+                    .cornerRadius(10)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 24)
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func summaryRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            Spacer()
+            Text(value)
+                .font(.body)
+                .fontWeight(.medium)
+        }
     }
 }
 

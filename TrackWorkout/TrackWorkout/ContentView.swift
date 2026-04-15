@@ -33,6 +33,18 @@ struct ContentView: View {
         animation: .default)
     private var workouts: FetchedResults<Workout>
 
+    // Hash of workout id+endTime pairs. When a workout's endTime changes in-place,
+    // this changes even though the underlying Workout references do not — letting
+    // us assign a new identity to EventHistory so SwiftUI re-renders its bucket.
+    private var workoutsVersion: Int {
+        var h = Hasher()
+        for w in workouts {
+            h.combine(w.id)
+            h.combine(w.endTime)
+        }
+        return h.finalize()
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -166,6 +178,7 @@ struct ContentView: View {
 
                 // Event History
                 EventHistory(entries: Array(logEntries), moves: Array(moves), workouts: Array(workouts))
+                    .id(workoutsVersion)
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showShareSheet) {

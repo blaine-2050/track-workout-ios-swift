@@ -44,4 +44,11 @@ appId: com.athenia.TrackWorkout
 - assertVisible: "1 set"
 - assertVisible: "1,350 lbs moved"
 - tapOn: "Done"
+- waitForAnimationToEnd
 - takeScreenshot: runs/screens/2026-04-15-script01-step8-dismissed
+# In-history summary should render now that the workout has endTime.
+# The green in-progress "Elapsed: H:MM" timer must be gone.
+- assertVisible: "Workout ended at.*"
+- assertVisible: "Duration: 1 sec"
+- assertVisible: "Sets: 1"
+- assertNotVisible: "Elapsed:.*"

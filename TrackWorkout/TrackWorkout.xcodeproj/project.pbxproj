@@ -165,7 +165,7 @@
 			);
 			mainGroup = A1000019233AAAAA00000001;
 			packageReferences = (
-				A1000032233AAAAA00000001 /* XCLocalSwiftPackageReference "../../apple-shared/TrackWorkoutCore" */,
+				A1000032233AAAAA00000001 /* XCLocalSwiftPackageReference "../TrackWorkoutCore" */,
 			);
 			productRefGroup = A100001B233AAAAA00000001 /* Products */;
 			projectDirPath = "";
@@ -408,16 +408,16 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A1000032233AAAAA00000001 /* XCLocalSwiftPackageReference "../../apple-shared/TrackWorkoutCore" */ = {
+		A1000032233AAAAA00000001 /* XCLocalSwiftPackageReference "../TrackWorkoutCore" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../apple-shared/TrackWorkoutCore;
+			relativePath = ../TrackWorkoutCore;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		A1000033233AAAAA00000001 /* TrackWorkoutCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A1000032233AAAAA00000001 /* XCLocalSwiftPackageReference "../../apple-shared/TrackWorkoutCore" */;
+			package = A1000032233AAAAA00000001 /* XCLocalSwiftPackageReference "../TrackWorkoutCore" */;
 			productName = TrackWorkoutCore;
 		};
 /* End XCSwiftPackageProductDependency section */

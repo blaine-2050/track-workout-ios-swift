@@ -39,6 +39,11 @@ struct ContentView: View {
         animation: .default)
     private var workouts: FetchedResults<Workout>
 
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \HeartRateSample.timestamp, ascending: true)],
+        animation: .default)
+    private var heartRateSamples: FetchedResults<HeartRateSample>
+
     // Hash of workout id+endTime pairs. When a workout's endTime changes in-place,
     // this changes even though the underlying Workout references do not — letting
     // us assign a new identity to EventHistory so SwiftUI re-renders its bucket.
@@ -226,7 +231,12 @@ struct ContentView: View {
                     .padding(.vertical, 1)
 
                 // Event History
-                EventHistory(entries: Array(logEntries), moves: Array(moves), workouts: Array(workouts))
+                EventHistory(
+                    entries: Array(logEntries),
+                    moves: Array(moves),
+                    workouts: Array(workouts),
+                    heartRateSamples: Array(heartRateSamples)
+                )
                     .id(workoutsVersion)
             }
             .navigationBarHidden(true)

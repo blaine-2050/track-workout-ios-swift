@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreData
 
 enum SettingsKey {
     static let syncEnabled = "sync.enabled"
@@ -8,6 +9,7 @@ enum SettingsKey {
 
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
 
     @AppStorage(SettingsKey.syncEnabled) private var syncEnabled: Bool = false
     @AppStorage(SettingsKey.syncEndpoint) private var endpoint: String = ""
@@ -15,6 +17,7 @@ struct SettingsSheet: View {
 
     @State private var testResult: String?
     @State private var testing = false
+    @State private var hrImportResult: String?
 
     var body: some View {
         NavigationStack {
@@ -57,6 +60,25 @@ struct SettingsSheet: View {
                         .disabled(testing || endpoint.isEmpty)
                         .accessibilityIdentifier("settings-test-button")
                     }
+                }
+
+                Section {
+                    Button(action: importDemoHR) {
+                        HStack {
+                            Text("Import demo HR data")
+                            Spacer()
+                            if let result = hrImportResult {
+                                Text(result)
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("settings-import-demo-hr")
+                } header: {
+                    Text("Heart rate")
+                } footer: {
+                    Text("Generates a 60-sample synthetic CSV ending now and imports it. Real file-picker import is coming; for now this proves the pipeline works.")
                 }
             }
             .navigationTitle("Settings")
@@ -106,6 +128,20 @@ struct SettingsSheet: View {
                 }
             }
         }
+    }
+
+    private func importDemoHR() {
+        let csv = HRFixture.syntheticCSV(seconds: 60)
+        let (parsed, _) = HRImporter.parse(csv)
+        // Use a nil-safe placeholder for userId until single-user is threaded.
+        let userId = UUID()
+        let result = HRImporter.persistAndAlign(
+            parsed,
+            source: "demo-fixture",
+            userId: userId,
+            in: viewContext
+        )
+        hrImportResult = "\(result.persisted) samples, \(result.aligned) aligned"
     }
 
     /// Replace `/sync/events` with `/health` for the connectivity probe.

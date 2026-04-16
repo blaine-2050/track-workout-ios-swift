@@ -143,9 +143,14 @@ struct EventHistory: View {
     let entries: [LogEntry]
     let moves: [Move]
     var workouts: [Workout] = []
+    var heartRateSamples: [HeartRateSample] = []
 
     private var workoutGroups: [WorkoutGroup] {
         groupByWorkout(entries: entries, moves: moves, workouts: workouts)
+    }
+
+    private var samplesByWorkoutId: [UUID: [HeartRateSample]] {
+        Dictionary(grouping: heartRateSamples.filter { $0.workoutId != nil }) { $0.workoutId! }
     }
 
     var body: some View {
@@ -158,7 +163,10 @@ struct EventHistory: View {
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(workoutGroups) { group in
-                        WorkoutGroupView(group: group)
+                        WorkoutGroupView(
+                            group: group,
+                            hrSamples: samplesByWorkoutId[group.id] ?? []
+                        )
                     }
                 }
                 .padding(.horizontal)
@@ -169,9 +177,19 @@ struct EventHistory: View {
 
 private struct WorkoutGroupView: View {
     let group: WorkoutGroup
+    var hrSamples: [HeartRateSample] = []
 
     private var isInProgress: Bool {
         group.startTime != nil && group.endTime == nil
+    }
+
+    private var hrSummary: (avg: Int, max: Int, count: Int)? {
+        guard !hrSamples.isEmpty else { return nil }
+        let bpms = hrSamples.map { Int($0.bpm) }.filter { $0 > 0 }
+        guard !bpms.isEmpty else { return nil }
+        let avg = bpms.reduce(0, +) / bpms.count
+        let maxBpm = bpms.max() ?? 0
+        return (avg, maxBpm, bpms.count)
     }
 
     private var workoutDateFormatter: DateFormatter {
@@ -203,6 +221,13 @@ private struct WorkoutGroupView: View {
                             .foregroundColor(.green)
                             .monospacedDigit()
                     }
+                }
+
+                if let hr = hrSummary {
+                    Text("HR: avg \(hr.avg) · max \(hr.max) bpm · \(hr.count) samples")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                        .accessibilityIdentifier("hr-summary")
                 }
             }
 

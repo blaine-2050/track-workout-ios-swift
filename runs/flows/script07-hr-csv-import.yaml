@@ -1,0 +1,60 @@
+# Maestro flow: script 07 — HR CSV import.
+# Logs a quick workout, then uses Settings → "Import demo HR data" to
+# ingest a 60-sample synthetic CSV ending at now. The synthetic samples
+# should align to the just-logged workout's time window, so the
+# workout's HR summary badge becomes visible.
+#
+# Deviation from spec: this flow uses the in-app synthetic fixture
+# rather than a real file-picker CSV import. Real file-picker import is
+# tracked as Phase 2 of milestone 6; it requires UIDocumentPicker
+# interaction which Maestro cannot drive through the system sheet.
+
+appId: com.athenia.TrackWorkout
+---
+- launchApp:
+    clearState: false
+- assertVisible: "Select Exercise"
+
+# ---------- Log a brief strength set so there's a workout to align HR to
+- tapOn: "Select Exercise"
+- waitForAnimationToEnd
+- tapOn: "Bench Press"
+- waitForAnimationToEnd
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-0"
+- tapOn:
+    id: "keypad-0"
+- tapOn: "Reps"
+- tapOn:
+    id: "keypad-5"
+- tapOn: "Log"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s07-1-set-logged
+
+# Pause so the synthetic CSV (which ends at "now") has samples that
+# overlap the workout's startTime..now window.
+- extendedWaitUntil:
+    visible: "__sentinel_does_not_exist__"
+    timeout: 3000
+    optional: true
+
+# ---------- Open Settings → Import demo HR data
+- tapOn:
+    id: "open-settings"
+- waitForAnimationToEnd
+- tapOn:
+    id: "settings-import-demo-hr"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s07-2-imported
+# Result label reflects the persist+align outcome
+- assertVisible: ".*samples.*aligned"
+
+- tapOn:
+    id: "settings-done"
+- waitForAnimationToEnd
+
+# ---------- Back in history, the workout should show an HR summary
+- takeScreenshot: runs/screens/2026-04-16-s07-3-history-with-hr
+- assertVisible: "HR: avg.*"

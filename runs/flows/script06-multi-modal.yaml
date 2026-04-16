@@ -1,0 +1,228 @@
+# Maestro flow: script 06 — multi-modal session (bike + cardio + strength
+# + cardio + bike + free-form cardio). Spec:
+# https://github.com/blaine-2050/track-workout-core/blob/main/WORKOUT_SCRIPTS/06-multi-modal-session.md
+#
+# Adjustments vs. spec:
+# - Yoga is logged as Cardio (duration) instead of note_only — the
+#   note_only entry path is not implemented yet in iOS.
+# - MTB is substituted for Treadmill: Treadmill falls below the viewport
+#   in the alphabetized SwiftUI picker on iPhone 12 and can't be tapped
+#   reliably by Maestro. MTB is also a seeded duration move.
+# - Waits between segment start and stop are short (~2s) so the flow
+#   runs in under a minute.
+
+appId: com.athenia.TrackWorkout
+---
+- launchApp:
+    clearState: false
+- assertVisible: "Select Exercise"
+
+# ---------- Outbound commute — free-form "Bike commute" cardio ----------
+- tapOn:
+    id: "add-move-button"
+- waitForAnimationToEnd
+- tapOn:
+    id: "add-move-name"
+- inputText: "Bike commute"
+- tapOn: "Cardio"
+- waitForAnimationToEnd
+- tapOn:
+    id: "add-move-save"
+- waitForAnimationToEnd
+- assertVisible: "Bike commute"
+- assertVisible: "Start segment"
+
+- tapOn:
+    id: "cardio-start"
+- extendedWaitUntil:
+    visible: "__sentinel_does_not_exist__"
+    timeout: 2000
+    optional: true
+- tapOn:
+    id: "cardio-stop"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s06-1-commute-out
+
+# ---------- MTB warmup ----------
+- tapOn: "Bike commute"
+- waitForAnimationToEnd
+- tapOn: "MTB"
+- waitForAnimationToEnd
+- tapOn:
+    id: "cardio-start"
+- extendedWaitUntil:
+    visible: "__sentinel_does_not_exist__"
+    timeout: 2000
+    optional: true
+- tapOn:
+    id: "cardio-stop"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s06-2-mtb
+
+# ---------- Bench Press: 3 sets, note on 3rd ----------
+- tapOn: "MTB"
+- waitForAnimationToEnd
+- tapOn: "Bench Press"
+- waitForAnimationToEnd
+# Set 1 — 135×10
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-3"
+- tapOn:
+    id: "keypad-5"
+- tapOn: "Reps"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-0"
+- tapOn: "Log"
+- waitForAnimationToEnd
+# Set 2 — 145×8 (sticky weight was 135, replace first digit then type)
+- tapOn: "Weight"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-4"
+- tapOn:
+    id: "keypad-5"
+- tapOn: "Reps"
+- tapOn:
+    id: "keypad-8"
+- tapOn: "Log"
+- waitForAnimationToEnd
+# Attach note for set 3
+- tapOn:
+    id: "add-note-button"
+- waitForAnimationToEnd
+- tapOn:
+    id: "note-textfield"
+- inputText: "right shoulder twinge — back off next time"
+- tapOn:
+    id: "note-save"
+- waitForAnimationToEnd
+- assertVisible: "Note pending"
+# Set 3 — 145×8 with note (sticky weight 145 and reps 8 already correct)
+- tapOn: "Log"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s06-3-bench-done
+- assertVisible: "right shoulder twinge.*"
+
+# ---------- Lat Pull Down: 2 sets ----------
+- tapOn: "Bench Press"
+- waitForAnimationToEnd
+- tapOn: "Lat Pull Down"
+- waitForAnimationToEnd
+- tapOn: "Weight"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-0"
+- tapOn:
+    id: "keypad-0"
+- tapOn: "Reps"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-2"
+- tapOn: "Log"
+- waitForAnimationToEnd
+# Set 2 — 110×10
+- tapOn: "Weight"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-0"
+- tapOn: "Reps"
+- tapOn:
+    id: "keypad-1"
+- tapOn:
+    id: "keypad-0"
+- tapOn: "Log"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s06-4-lat-done
+
+# ---------- Elliptical cooldown ---------- (catalog spelling: "Elipitical")
+- tapOn: "Lat Pull Down"
+- waitForAnimationToEnd
+- tapOn: "Elipitical"
+- waitForAnimationToEnd
+- tapOn:
+    id: "cardio-start"
+- extendedWaitUntil:
+    visible: "__sentinel_does_not_exist__"
+    timeout: 2000
+    optional: true
+- tapOn:
+    id: "cardio-stop"
+- waitForAnimationToEnd
+
+# ---------- Return commute — re-use Bike commute from catalog ----------
+- tapOn: "Elipitical"
+- waitForAnimationToEnd
+- tapOn: "Bike commute"
+- waitForAnimationToEnd
+- tapOn:
+    id: "cardio-start"
+- extendedWaitUntil:
+    visible: "__sentinel_does_not_exist__"
+    timeout: 2000
+    optional: true
+- tapOn:
+    id: "cardio-stop"
+- waitForAnimationToEnd
+
+# ---------- Yoga — add as free-form Cardio, attach note, run as segment ----------
+- tapOn:
+    id: "add-move-button"
+- waitForAnimationToEnd
+- tapOn:
+    id: "add-move-name"
+- inputText: "Yoga at home"
+- tapOn: "Cardio"
+- waitForAnimationToEnd
+- tapOn:
+    id: "add-move-save"
+- waitForAnimationToEnd
+- assertVisible: "Yoga at home"
+
+- tapOn:
+    id: "add-note-button"
+- waitForAnimationToEnd
+- tapOn:
+    id: "note-textfield"
+- inputText: "15 min, mostly stretching, hamstrings tight"
+- tapOn:
+    id: "note-save"
+- waitForAnimationToEnd
+
+- tapOn:
+    id: "cardio-start"
+- extendedWaitUntil:
+    visible: "__sentinel_does_not_exist__"
+    timeout: 2000
+    optional: true
+- tapOn:
+    id: "cardio-stop"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s06-5-yoga-done
+- assertVisible: ".*hamstrings tight"
+
+# ---------- Wrap — Stop workout, verify summary ----------
+- tapOn: "Stop"
+- waitForAnimationToEnd
+- takeScreenshot: runs/screens/2026-04-16-s06-6-stop-summary
+- assertVisible: "Workout Complete"
+- assertVisible: "10 sets"
+- assertVisible: "5,970 lbs moved"
+- tapOn: "Done"
+- waitForAnimationToEnd
+
+# ---------- Post-dismiss: latest notes render in history ----------
+# The yoga note is at the top of the ScrollView; the bench press note is
+# several entries down and may not be in the LazyVStack viewport. We
+# already asserted the bench note right after logging it; here we just
+# verify the most recent note survived the summary-dismiss cycle.
+- assertVisible: ".*hamstrings tight"

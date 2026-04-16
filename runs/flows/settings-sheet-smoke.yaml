@@ -15,6 +15,12 @@ appId: com.athenia.TrackWorkout
 - assertVisible: "Settings"
 - assertVisible: "Sync to remote server"
 
+# HR section present (added in v2.1). Actual file-picker interaction is
+# out of Maestro's reach (UIDocumentPicker is a system sheet), so we
+# just assert the button exists.
+- assertVisible: "Import HR CSV from file.*"
+- assertVisible: "Import demo HR data"
+
 # Toggle sync on. SwiftUI Toggle in a Form row needs the tap on the
 # trailing UISwitch hit-target; row bounds are [16,152][374,204] so
 # the switch sits around (92%, 21%) on iPhone 12 (390x844).

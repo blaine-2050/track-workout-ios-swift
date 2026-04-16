@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import UniformTypeIdentifiers
 
 enum SettingsKey {
     static let syncEnabled = "sync.enabled"
@@ -18,6 +19,8 @@ struct SettingsSheet: View {
     @State private var testResult: String?
     @State private var testing = false
     @State private var hrImportResult: String?
+    @State private var showingFileImporter = false
+    @State private var fileImportError: String?
 
     var body: some View {
         NavigationStack {
@@ -63,6 +66,16 @@ struct SettingsSheet: View {
                 }
 
                 Section {
+                    Button(action: { showingFileImporter = true }) {
+                        HStack {
+                            Text("Import HR CSV from file…")
+                            Spacer()
+                            Image(systemName: "square.and.arrow.down")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .accessibilityIdentifier("settings-import-hr-file")
+
                     Button(action: importDemoHR) {
                         HStack {
                             Text("Import demo HR data")
@@ -75,11 +88,24 @@ struct SettingsSheet: View {
                         }
                     }
                     .accessibilityIdentifier("settings-import-demo-hr")
+
+                    if let err = fileImportError {
+                        Text(err)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
                 } header: {
                     Text("Heart rate")
                 } footer: {
-                    Text("Generates a 60-sample synthetic CSV ending now and imports it. Real file-picker import is coming; for now this proves the pipeline works.")
+                    Text("Expected columns: timestamp, heart_rate_bpm (required). Optional: elevation_m, speed_kmh, distance_km. See DATA_MODEL.md § CSV Import Schema in track-workout-core.")
                 }
+            }
+            .fileImporter(
+                isPresented: $showingFileImporter,
+                allowedContentTypes: [.commaSeparatedText, .text, .plainText, .data],
+                allowsMultipleSelection: false
+            ) { result in
+                handleFileImport(result)
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -126,6 +152,45 @@ struct SettingsSheet: View {
                     testResult = "Error: \(error.localizedDescription)"
                     testing = false
                 }
+            }
+        }
+    }
+
+    private func handleFileImport(_ result: Result<[URL], Error>) {
+        fileImportError = nil
+        switch result {
+        case .failure(let err):
+            fileImportError = "Could not open file: \(err.localizedDescription)"
+            return
+        case .success(let urls):
+            guard let url = urls.first else {
+                fileImportError = "No file selected"
+                return
+            }
+            // Files from other apps (Files.app, iCloud Drive) come with
+            // security-scoped URLs that need explicit access.
+            let needsRelease = url.startAccessingSecurityScopedResource()
+            defer {
+                if needsRelease { url.stopAccessingSecurityScopedResource() }
+            }
+            do {
+                let data = try Data(contentsOf: url)
+                guard let csv = String(data: data, encoding: .utf8) else {
+                    fileImportError = "File is not valid UTF-8"
+                    return
+                }
+                let (parsed, skipped) = HRImporter.parse(csv)
+                let source = "file:" + url.lastPathComponent
+                let importResult = HRImporter.persistAndAlign(
+                    parsed,
+                    source: source,
+                    userId: UUID(),
+                    in: viewContext
+                )
+                hrImportResult = "\(importResult.persisted) samples, \(importResult.aligned) aligned" +
+                    (skipped > 0 ? " · \(skipped) rows skipped" : "")
+            } catch {
+                fileImportError = "Read failed: \(error.localizedDescription)"
             }
         }
     }

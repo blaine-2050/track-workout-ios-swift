@@ -1,14 +1,16 @@
 # CLAUDE.md — track-workout-swift
 
-## Source of truth
-This repo implements Track Workout on iOS. **Behavior, data model, and acceptance criteria come from the core spec repo**, not from this repo's code.
+## Tool + platforms
+SwiftUI + Core Data. Min iOS 16. Xcode 14+. Targets **iOS** (primary) and **macOS** (future).
 
-Before non-trivial work, fetch the relevant core-repo file:
-- Product: https://github.com/blaine-2050/track-workout-core/blob/main/PRD.md
-- Data model: https://github.com/blaine-2050/track-workout-core/blob/main/DATA_MODEL.md
-- Computer-use protocol: https://github.com/blaine-2050/track-workout-core/blob/main/COMPUTER_USE_PROTOCOL.md
-- Workout scripts: https://github.com/blaine-2050/track-workout-core/tree/main/WORKOUT_SCRIPTS
-- Decisions: https://github.com/blaine-2050/track-workout-core/blob/main/DECISIONS.md
+## Delegates to
+
+| What | Where | How |
+|------|-------|-----|
+| **Behavior spec** | [track-workout-core](https://github.com/blaine-2050/track-workout-core) | Fetch `PRD.md`, `DATA_MODEL.md`, `COMPUTER_USE_PROTOCOL.md`, `WORKOUT_SCRIPTS/`, `DECISIONS.md` before non-trivial work. Spec wins unless a decision is recorded here. |
+| **Sync server** | [track-workout-api](https://github.com/blaine-2050/track-workout-api) | Opt-in `POST /sync/events` with API key. Disabled by default (Settings toggle). |
+| **HR data (FIT→CSV)** | [body-metrics](../body-metrics/) | `fit_to_csv.py` converts vendor FIT → CSV. This app imports the normalized CSV via Settings → "Import HR CSV from file…". |
+| **HR data (BLE)** | [ble](../ble/) | Future. Direct Polar H10 integration via CoreBluetooth. |
 
 If this repo's code disagrees with the core spec, the spec wins unless there's a decision recorded here or in core explaining the divergence.
 
